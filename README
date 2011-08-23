@@ -1,6 +1,10 @@
 /!\ This project is in progress
 It actually DOES NOT WORK ! You can contribute but not use it.
 
+Dependencies
+============
+aptitude install python-pexpect
+
 Actual state
 ============
  Can lanch a program and emulate an ANSI terminal
