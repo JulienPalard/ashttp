@@ -3,41 +3,74 @@ import ANSI
 import pty
 import os
 import sys
+import threading
+import BaseHTTPServer
+import SocketServer
+
 
 """
 Please read the README
 """
 
-ansi = ANSI.ANSI()
+class Pipe():
+    def __init__(self, fd_read, read, fd_write):
+        self.fd_read = fd_read
+        self.read = read
+        self.fd_write = fd_write
 
-def master_read(fd):
-    ansi.write(os.read(fd, 1024))
-    return ''
+class HttpHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    def OK(self, data):
+        self.wfile.write("HTTP/1.1 200 OK\r\nServer: ashttp\r\nContent-Length:")
+        self.wfile.write(str(len(data)))
+        self.wfile.write("\r\n\r\n")
+        self.wfile.write(data)
 
-def slave_read(fd):
-    data = os.read(fd, 1)
-    print ansi.pretty()
-    return data
+    def do_GET(self):
+        self.OK(str(self.data_source))
 
-def spawn(argv, master_read=master_read, stdin_read=slave_read):
-    """Create a spawned process."""
-    if type(argv) == type(''):
-        argv = (argv,)
-    pid, master_fd = pty.fork()
-    if pid == pty.CHILD:
-        os.execlp(argv[0], *argv) # , {'TERM': 'vt100'})
-        try:
-            mode = tty.tcgetattr(STDIN_FILENO)
-            tty.setraw(STDIN_FILENO)
-        except tty.error:    # This is the same as termios.error
-            pass
-    pty._copy(master_fd, master_read, stdin_read)
-    os.close(master_fd)
+class BackgroundProgramInAPTY():
+    def spawn(self, argv):
+        if type(argv) == type(''):
+            argv = (argv,)
+        pid, master_fd = pty.fork()
+        if pid == pty.CHILD:
+            try:
+                os.execlp(argv[0], *argv)
+            except Exception as e:
+                print e
+            sys.exit(0)
+        else:
+            return master_fd
 
-def main():
-    spawn(sys.argv[1:], master_read, slave_read)
-    while True:
-        os.read(1, 1)
-        print ansi.pretty()
+    def __init__(self, argv):
+        self.ansi = ANSI.ANSI()
+        self.master_fd = self.spawn(argv)
+
+    def __call__(self):
+        while True:
+            try:
+                self.ansi.write(os.read(self.master_fd, 1024))
+            except (IOError, OSError):
+                pass  # Don't whine if the program left ...
+
+    def __str__(self):
+        return str(self.ansi)
+
+def main(argc, argv):
+    if argc < 3:
+        print "USAGE: %s PORT COMMAND ARGS" % argv[0]
+        sys.exit(1)
+    background_program = BackgroundProgramInAPTY(argv[2:])
+    thread = threading.Thread(target=background_program)
+    thread.setDaemon(True)
+    thread.start()
+    HttpHandler.data_source = background_program
+    SocketServer.TCPServer.allow_reuse_address = True
+    httpd = SocketServer.TCPServer(("", int(argv[1])), HttpHandler)
+    try:
+        httpd.serve_forever()
+    except KeyboardInterrupt:
+        httpd.shutdown()
+
 if __name__ == "__main__":
-    main()
+    main(len(sys.argv), sys.argv)

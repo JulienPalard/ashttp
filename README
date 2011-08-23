@@ -1,29 +1,24 @@
-/!\ This project is in progress
-It actually DOES NOT WORK ! You can contribute but not use it.
-
 Dependencies
 ============
+
 aptitude install python-pexpect
 
-Actual state
-============
- Can lanch a program and emulate an ANSI terminal
- Show a dump of the terminal when you hit enter.
+What is ashttp ?
+================
 
-The final goal is
-=================
+ashttp can serve any text application over http, like :
 
-Serve any shell application over http, like :
-$ ashttp -p8080 top
+$ ashttp 8080 top
 to serve a top on port 8080, or :
-$ ashttp -p8080 watch ls -lah /tmp
+
+$ ashttp 8080 watch -n 1 ls -lah /tmp
 to serve an actualized directory listing of /tmp
 
-ashttp should first send raw ascii text as an HTTP response.
+LICENSE
+=======
 
-TODO
-====
- * FIX bugs that may be in ANSI (~vt100) terminal implementation
-    * To find bugs, try ashttp top ... )o:
- * Really serve as http, actually only dumps to stdout while hitting RETURN.
+ashttp use a modified version of the vt100 emulator found in pexpect,
+you'll find the pexpect licence in the file python-pexpect-licence
 
+The ashttp licence is under FreeBSD Licence that you can found in the copyright
+file
