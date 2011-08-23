@@ -6,6 +6,9 @@ import sys
 import threading
 import BaseHTTPServer
 import SocketServer
+from fcntl import ioctl
+from termios import TIOCSWINSZ
+from struct import pack
 
 
 """
@@ -40,6 +43,7 @@ class BackgroundProgramInAPTY():
                 print e
             sys.exit(0)
         else:
+            ioctl(master_fd, TIOCSWINSZ, pack("HHHH", 24, 80, 0, 0))
             return master_fd
 
     def __init__(self, argv):
