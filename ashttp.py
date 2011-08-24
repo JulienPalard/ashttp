@@ -59,7 +59,7 @@ class BackgroundProgramInAPTY():
             sys.exit(0)
         else:
             ioctl(master_fd, TIOCSWINSZ, pack("HHHH",
-                                              self.width, self.height,
+                                              self.height, self.width,
                                               0, 0))
             return master_fd
 
