@@ -1,15 +1,23 @@
 #!/usr/bin/env python
-import ANSI
-import pty
 import os
 import sys
 import threading
+try:
+    import ANSI
+except ImportError:
+    print "Please install python-pexpect"
+    sys.exit(1)
+import pty
 import BaseHTTPServer
 import SocketServer
 from fcntl import ioctl
 from termios import TIOCSWINSZ
 from struct import pack
-from argparse import ArgumentParser
+try:
+    from argparse import ArgumentParser
+except ImportError:
+    print "Please install python-argparse"
+    sys.exit(1)
 
 
 """
