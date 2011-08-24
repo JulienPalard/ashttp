@@ -9,6 +9,7 @@ import SocketServer
 from fcntl import ioctl
 from termios import TIOCSWINSZ
 from struct import pack
+from argparse import ArgumentParser
 
 
 """
@@ -32,6 +33,12 @@ class HttpHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.OK(str(self.data_source))
 
 class BackgroundProgramInAPTY():
+    def __init__(self, command, argv=[], width=80, height=24):
+        self.ansi = ANSI.ANSI(height, width)
+        self.width = width
+        self.height = height
+        self.master_fd = self.spawn([command] + argv)
+
     def spawn(self, argv):
         if type(argv) == type(''):
             argv = (argv,)
@@ -43,12 +50,10 @@ class BackgroundProgramInAPTY():
                 print e
             sys.exit(0)
         else:
-            ioctl(master_fd, TIOCSWINSZ, pack("HHHH", 24, 80, 0, 0))
+            ioctl(master_fd, TIOCSWINSZ, pack("HHHH",
+                                              self.width, self.height,
+                                              0, 0))
             return master_fd
-
-    def __init__(self, argv):
-        self.ansi = ANSI.ANSI()
-        self.master_fd = self.spawn(argv)
 
     def __call__(self):
         while True:
@@ -60,21 +65,44 @@ class BackgroundProgramInAPTY():
     def __str__(self):
         return str(self.ansi)
 
-def main(argc, argv):
-    if argc < 3:
-        print "USAGE: %s PORT COMMAND ARGS" % argv[0]
-        sys.exit(1)
-    background_program = BackgroundProgramInAPTY(argv[2:])
+def ashttp(args):
+    background_program = BackgroundProgramInAPTY(args.command,
+                                                 args.args,
+                                                 args.width,
+                                                 args.height)
     thread = threading.Thread(target=background_program)
     thread.setDaemon(True)
     thread.start()
     HttpHandler.data_source = background_program
     SocketServer.TCPServer.allow_reuse_address = True
-    httpd = SocketServer.TCPServer(("", int(argv[1])), HttpHandler)
+    httpd = SocketServer.TCPServer(("", args.port), HttpHandler)
     try:
         httpd.serve_forever()
     except KeyboardInterrupt:
         httpd.shutdown()
+
+
+def main(argc, argv):
+    parser = ArgumentParser(
+        description="Display a text program (like top, ...) over http.",
+        epilog="""
+If an argument of you command begin with -, use a double dash
+to separate your program arguments from ashttp arguments, like :
+ashttp -- watch -n 1 ls /tmp""")
+    parser.add_argument("-p", "--port", dest="port", default=8080,
+                        metavar=8080, type=int,
+                        help="Port to listen for HTTP requests")
+    parser.add_argument("-W", "--width", type=int,
+                        dest="width", default=80, metavar=80,
+                        help="Width of the emulated terminal")
+    parser.add_argument("-H", "--height", type=int,
+                      dest="height", default=24, metavar=24,
+                      help="Height of the emulated terminal")
+    parser.add_argument("command",
+                      help="Command to run and serve")
+    parser.add_argument('args', metavar='ARG', type=str, nargs='*', default=[],
+                        help='Arguments that are given to the command.')
+    ashttp(parser.parse_args())
 
 if __name__ == "__main__":
     main(len(sys.argv), sys.argv)
