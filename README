@@ -1,24 +1,25 @@
 Dependencies
 ============
 
-aptitude install python-pexpect
+hl_vt100
+--------
+
+https://github.com/JulienPalard/vt100-emulator
+Just download, make python_module && python setup.py install
 
 What is ashttp ?
 ================
 
 ashttp can serve any text application over http, like :
 
-$ ashttp 8080 top
+$ ashttp -p 8080 top
 to serve a top on port 8080, or :
 
-$ ashttp 8080 watch -n 1 ls -lah /tmp
+$ ashttp -p 8080 watch -n 1 ls -lah /tmp
 to serve an actualized directory listing of /tmp
 
 LICENSE
 =======
 
-ashttp use a modified version of the vt100 emulator found in pexpect,
-you'll find the pexpect licence in the file python-pexpect-licence
-
-The ashttp licence is under FreeBSD Licence that you can found in the copyright
+The ashttp licence is FreeBSD Licence that you can found in the copyright
 file
