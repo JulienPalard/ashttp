@@ -4,8 +4,12 @@ Dependencies
 hl_vt100
 --------
 
-https://github.com/JulienPalard/vt100-emulator
-Just download, make python_module && python setup.py install
+To get and compile hl_vt100 :
+
+$ git clone https://github.com/JulienPalard/vt100-emulator.git
+$ aptitude install python-dev
+$ make python_module
+$ python setup.py install
 
 What is ashttp ?
 ================
