@@ -23,7 +23,7 @@ class HttpHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 class BackgroundProgramToLogtop():
     def __init__(self, command, json):
         self.program_to_listen = Popen(command, shell=True, stdout=PIPE)
-        self.logtop = logtop.logtop(1000)
+        self.logtop = logtop.logtop(10000)
         self.json = json
 
     def __call__(self):
